@@ -1,0 +1,147 @@
+# Design Decisions
+
+This file records architecture choices, tradeoffs, and reasoning for Project III.
+
+## Continue the Terraform Catalogue platform
+
+Project III will continue the same Terraform Catalogue concept instead of creating an unrelated Docker application.
+
+Reasoning:
+
+- Creates a stronger portfolio story.
+- Shows the same product idea deployed across multiple AWS architecture patterns.
+- Allows comparison between static hosting, serverless, containers, and later Kubernetes.
+- Keeps the application domain familiar while the infrastructure becomes more advanced.
+
+Tradeoff:
+
+- Less variety in application themes.
+- Requires careful documentation so each project still has a distinct infrastructure focus.
+
+## ECS Fargate instead of EC2-backed ECS
+
+ECS Fargate will be used for the first version.
+
+Reasoning:
+
+- Reduces server management overhead.
+- Keeps focus on containers, tasks, services, networking, and load balancing.
+- Avoids managing EC2 capacity, AMIs, and cluster instances.
+- Fits the project goal of learning managed container deployment on AWS.
+
+Tradeoff:
+
+- Fargate can be more expensive than carefully managed EC2 for always-on workloads.
+- Less control over the underlying compute layer.
+
+EC2-backed ECS is unnecessary for the current scope and goal of this project.
+
+## Small API instead of a complex application
+
+The app should remain intentionally simple. The focus is to work with Fargate and containers in AWS.
+
+Reasoning:
+
+- The main focus is AWS infrastructure, not application complexity.
+- A small API is enough to validate container deployment, health checks, routing, logs, and service availability.
+- Reusing the Terraform Catalogue API concept keeps continuity with Project II.
+
+Tradeoff:
+
+- The application itself will not demonstrate advanced backend design in v1.
+
+## Use in-memory sample data in v1
+
+No RDS, DynamoDB integration, or persistent database will be included in the first version.
+
+Reasoning:
+
+- Keeps cost lower.
+- Keeps the architecture focused on container deployment.
+- Avoids adding stateful infrastructure before the ECS fundamentals are clear.
+- Allows the container deployment path to be validated first.
+
+Tradeoff:
+
+- The app will be less realistic than a full production backend.
+- Data will not persist outside the application code in v1.
+
+This is acceptable because this small project is preparation for a full production-style project later on.
+
+## Start with HTTP only
+
+The first version will use an ALB HTTP listener.
+
+Reasoning:
+
+- Reduces initial complexity.
+- Allows focus on ECS service networking and health checks first.
+
+Tradeoff:
+
+- HTTPS is expected in a production system and should be added later with ACM.
+
+## Run ECS tasks in private subnets
+
+ECS Fargate tasks will run in private subnets for this project.
+
+The Application Load Balancer will be placed in public subnets and will forward traffic to the ECS tasks in private subnets.
+
+Reasoning:
+
+- Keeps application containers away from direct public internet exposure.
+- Better matches common production ECS architecture.
+- Forces clear understanding of ALB-to-task routing and security group design.
+- Separates public entry points from private application workloads.
+
+Tradeoff:
+
+- Private tasks still need outbound access to pull images from ECR and send logs to CloudWatch.
+- This requires VPC endpoints for the AWS services the task needs.
+- VPC endpoints add more Terraform resources and design complexity.
+- Avoiding NAT Gateway reduces the risk of recurring NAT hourly and data processing cost.
+
+For v1, this remains acceptable because the project follows a deploy-test-destroy workflow.
+
+## Use VPC endpoints instead of NAT Gateway
+
+Private ECS tasks will use VPC endpoints instead of NAT Gateway for required AWS service access.
+
+Reasoning:
+
+- NAT Gateway has an always-on hourly charge and data processing charges.
+- The project is a cost-conscious lab and does not need general-purpose internet egress from private subnets.
+- ECS tasks mainly need access to AWS services such as ECR, CloudWatch Logs, and S3-backed ECR image layers.
+- VPC endpoints allow private connectivity to those AWS services without routing through a NAT Gateway.
+
+Planned endpoints for ECS image pull and logging:
+
+- ECR API interface endpoint.
+- ECR Docker interface endpoint.
+- CloudWatch Logs interface endpoint.
+- S3 gateway endpoint.
+
+Tradeoff:
+
+- More infrastructure resources to understand and manage.
+- Endpoint policies and security groups must be configured correctly.
+- If the container later needs general outbound internet access, this design would need to be revisited.
+
+## Use an ephemeral lab deployment model
+
+This project will use a deploy-test-destroy workflow.
+
+Infrastructure should be created only when validating the project, then destroyed after testing is complete.
+
+Reasoning:
+
+- The project is intended for hands-on learning and portfolio validation, not ongoing production usage.
+- ECS Fargate and Application Load Balancer resources can create recurring cost while running.
+- Destroying resources after validation keeps the AWS account clean and cost-controlled.
+- Terraform makes it safe to recreate the infrastructure later when needed.
+
+Tradeoff:
+
+- The public endpoint will not remain available after cleanup.
+- CloudWatch logs and runtime evidence may be removed unless saved separately.
+- Any manual runtime changes would be lost, which reinforces the need to keep configuration in code.
