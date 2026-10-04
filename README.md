@@ -6,13 +6,13 @@ This project is the containerized evolution of the Terraform Catalogue platform.
 
 The goal is to take the same API concept from Project II and redeploy it using Docker, Amazon ECR, Amazon ECS Fargate, an Application Load Balancer, CloudWatch Logs, IAM, and Terraform.
 
-This keeps the portfolio story consistent:
+This keeps the portfolio of AWS mini projects consistent:
 
 - Project I: Terraform Catalogue static website on S3 and CloudFront.
 - Project II: Terraform Catalogue serverless API on API Gateway, Lambda, and DynamoDB.
 - Project III: Terraform Catalogue container API on ECS Fargate.
 
-The main learning focus is AWS container deployment, networking, load balancing, IAM roles, logs, and Terraform-managed infrastructure.
+The main focus is AWS container deployment, networking, load balancing, IAM roles, logs, and Terraform-managed infrastructure.
 
 ## Target outcome
 
