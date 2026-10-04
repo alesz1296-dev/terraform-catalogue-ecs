@@ -1,0 +1,54 @@
+# Terraform local files
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform plans
+*.tfplan
+plan.out
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# Local environment files
+.env
+.env.*
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Docker/local runtime artifacts
+*.log
+tmp/
+temp/
+
+# AWS/local generated files
+response.json
+event.json
+seed-item.json
+key.json
+
+# Editor/OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
