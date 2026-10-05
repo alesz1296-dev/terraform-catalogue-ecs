@@ -1,3 +1,4 @@
+# ECS
 output "ecr_repository_name" {
   description = "Name of the ECR repository."
   value       = aws_ecr_repository.catalogue.name
@@ -35,4 +36,50 @@ output "ecs_task_definition_arn" {
 output "ecs_task_definition_family" {
   description = "Family name of the ECS task definition."
   value       = aws_ecs_task_definition.catalogue.family
+}
+
+# VPCs
+output "vpc_id" {
+  description = "ID of the project VPC."
+  value       = aws_vpc.catalogue.id
+}
+
+output "vpc_cidr_block" {
+  description = "CIDR block of the project VPC."
+  value       = aws_vpc.catalogue.cidr_block
+}
+
+output "public_subnet_ids" {
+  description = "IDs of the public subnets used by the ALB."
+  value       = aws_subnet.public[*].id
+}
+
+output "private_subnet_ids" {
+  description = "IDs of the private subnets used by ECS tasks."
+  value       = aws_subnet.private[*].id
+}
+
+output "internet_gateway_id" {
+  description = "ID of the internet gateway attached to the VPC."
+  value       = aws_internet_gateway.catalogue.id
+}
+
+output "public_route_table_id" {
+  description = "ID of the public route table."
+  value       = aws_route_table.public.id
+}
+
+output "private_route_table_id" {
+  description = "ID of the private route table."
+  value       = aws_route_table.private.id
+}
+
+output "alb_security_group_id" {
+  description = "Security group ID for the Application Load Balancer."
+  value       = aws_security_group.alb.id
+}
+
+output "ecs_tasks_security_group_id" {
+  description = "Security group ID for ECS Fargate tasks."
+  value       = aws_security_group.ecs_tasks.id
 }

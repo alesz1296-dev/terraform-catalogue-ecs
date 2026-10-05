@@ -27,15 +27,6 @@ variable "log_retention_days" {
   default = 1
 }
 
-locals {
-  name_prefix = "${var.project_name}-${var.environment}" ##need to update this in old definitions
-  common_tags = {
-    Project     = var.project_name
-    Environment = var.environment
-    ManagedBy   = var.manager
-  }
-}
-
 
 # ECS task defintions vars
 variable "container_port" {
@@ -48,4 +39,31 @@ variable "container_image_tag" {
   description = "Docker image tag deployed by the ECS task definition."
   type        = string
   default     = "dev-1"
+}
+
+# VPCs
+
+variable "cidr_block" {
+  description = "CIDR block for the project VPC."
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+
+variable "availability_zones" {
+  description = "Availability zones used by the project subnets."
+  type        = list(string)
+  default     = ["us-east-1a", "us-east-1b"]
+}
+
+variable "public_subnet_cidrs" {
+  description = "CIDR blocks for public subnets."
+  type        = list(string)
+  default     = ["10.0.1.0/24", "10.0.2.0/24"]
+}
+
+variable "private_subnet_cidrs" {
+  description = "CIDR blocks for private subnets."
+  type        = list(string)
+  default     = ["10.0.11.0/24", "10.0.12.0/24"]
 }

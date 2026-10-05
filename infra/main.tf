@@ -6,8 +6,9 @@
 
 
 resource "aws_ecr_repository" "catalogue" {
-  name                 = "${var.project_name}-${var.environment}-repository"
+  name                 = "${local.name_prefix}-repository"
   image_tag_mutability = "IMMUTABLE_WITH_EXCLUSION"
+  force_delete         = true # delete the repo even if it has images
 
   image_tag_mutability_exclusion_filter {
     filter      = "dev-*"
@@ -22,11 +23,7 @@ resource "aws_ecr_repository" "catalogue" {
     encryption_type = "AES256"
   }
 
-  tags = {
-    Project     = var.project_name
-    Environment = var.environment
-    ManagedBy   = var.manager
-  }
+  tags = local.common_tags
 }
 
 
@@ -35,7 +32,7 @@ resource "aws_ecr_repository" "catalogue" {
 #######################################################################################
 
 resource "aws_ecs_cluster" "catalogue" {
-  name = "${var.project_name}-${var.environment}-cluster"
+  name = "${local.name_prefix}-cluster"
 
   tags = local.common_tags
 }
@@ -107,10 +104,188 @@ resource "aws_ecs_task_definition" "catalogue" {
 
 
 resource "aws_cloudwatch_log_group" "ecs_cluster" {
-  name              = "/aws/ecs/${var.project_name}-${var.environment}"
+  name              = "/aws/ecs/${local.name_prefix}"
   retention_in_days = var.log_retention_days
 
   tags = local.common_tags
 }
 
+
+#######################################################################################
+####################                       VPCs                    ####################
+#######################################################################################
+
+resource "aws_vpc" "catalogue" {
+  cidr_block           = var.cidr_block
+  enable_dns_support   = true
+  enable_dns_hostnames = true
+
+  # combines common tags + resource-specific Name tag
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-vpc"
+    }
+  )
+}
+
+resource "aws_internet_gateway" "catalogue" {
+  vpc_id = aws_vpc.catalogue.id
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-igw"
+    }
+  )
+}
+
+resource "aws_subnet" "public" {
+  count = length(var.public_subnet_cidrs)
+
+  vpc_id                  = aws_vpc.catalogue.id
+  cidr_block              = var.public_subnet_cidrs[count.index]
+  availability_zone       = var.availability_zones[count.index]
+  map_public_ip_on_launch = true
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-public-subnet-${count.index + 1}"
+      Tier = "public"
+    }
+  )
+}
+
+resource "aws_subnet" "private" {
+  count = length(var.private_subnet_cidrs)
+
+  vpc_id                  = aws_vpc.catalogue.id
+  cidr_block              = var.private_subnet_cidrs[count.index]
+  availability_zone       = var.availability_zones[count.index]
+  map_public_ip_on_launch = false
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-private-subnet-${count.index + 1}"
+      Tier = "private"
+    }
+  )
+}
+
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.catalogue.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.catalogue.id
+  }
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-public-rt"
+      Tier = "public"
+    }
+  )
+}
+
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.catalogue.id
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-private-rt"
+      Tier = "private"
+    }
+  )
+}
+
+resource "aws_route_table_association" "public" {
+  count = length(aws_subnet.public)
+
+  subnet_id      = aws_subnet.public[count.index].id
+  route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private" {
+  count = length(aws_subnet.private)
+
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
+
+
+#######################################################################################
+####################               Security Groups                 ####################
+#######################################################################################
+
+#ALB SG
+#Inbound: 80  (HTTP) from 0.0.0.0/0
+#Outbound: all traffic
+
+resource "aws_security_group" "alb" {
+  name        = "${local.name_prefix}-alb-sg"
+  description = "Allow HTTP traffic to the public Application Load Balancer."
+  vpc_id      = aws_vpc.catalogue.id
+
+  ingress {
+    description = "Allow HTTP from the internet."
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    description = "Allow outbound traffic."
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-alb-sg"
+    }
+  )
+}
+
+#ECS SG
+#Inbound: 8000 from ALB security group
+#Outbound: all traffic
+
+resource "aws_security_group" "ecs_tasks" {
+  name        = "${local.name_prefix}-ecs-tasks-sg"
+  description = "Allow traffic from the ALB to ECS tasks."
+  vpc_id      = aws_vpc.catalogue.id
+
+  ingress {
+    description     = "Allow app traffic from the ALB."
+    from_port       = var.container_port
+    to_port         = var.container_port
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+  }
+
+  egress {
+    description = "Allow outbound traffic to AWS services through VPC endpoints."
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-ecs-tasks-sg"
+    }
+  )
+}
 
