@@ -72,29 +72,53 @@ ECS Service starts Fargate task
 
 ## Main components
 
+### ECR Repository
+
+Stores the Docker image that ECS pulls when starting tasks.
+
+Status: created.
+
+### ECS Cluster
+
+Logical home for ECS services and tasks.
+
+Status: created.
+
+### ECS Task Definition
+
+Defines the container image, CPU, memory, port mappings, execution role, and logging configuration.
+
+Status: created.
+
+The first task definition revision is:
+
+```text
+terraform-catalogue-ecs-dev-task:1
+```
+
 ### Application Load Balancer
 
 Receives external HTTP traffic and forwards requests to healthy ECS tasks.
+
+Status: pending.
 
 ### ECS Service
 
 Maintains the desired number of running tasks and connects the tasks to the target group.
 
-### ECS Task Definition
-
-Defines the container image, CPU, memory, port mappings, environment variables, IAM role, and logging configuration.
+Status: pending.
 
 ### Fargate Task
 
 Runs the container without managing EC2 instances.
 
-### ECR Repository
-
-Stores the Docker image that ECS pulls when starting tasks.
+Status: pending.
 
 ### CloudWatch Logs
 
 Stores logs emitted by the running container.
+
+Status: log group created.
 
 ## Initial endpoint plan
 

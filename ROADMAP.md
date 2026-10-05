@@ -23,17 +23,19 @@
 
 ## Phase 2: Container registry
 
-- Create ECR repository.
-- Authenticate Docker to ECR.
-- Tag the local image.
-- Push image to ECR.
+- Create ECR repository. Completed.
+- Authenticate Docker to ECR. Completed.
+- Tag the local image. Completed.
+- Push image to ECR. Completed.
 
 ## Phase 3: ECS foundation
 
-- Create ECS cluster.
-- Create task execution role.
-- Create CloudWatch log group.
-- Create ECS task definition.
+- Create ECS cluster. Completed.
+- Create task execution role. Completed.
+- Attach ECS task execution policy. Completed.
+- Create CloudWatch log group. Completed.
+- Create ECS task definition. Completed.
+- Confirm task definition revision is created. Completed.
 
 ## Phase 4: Load-balanced ECS service
 

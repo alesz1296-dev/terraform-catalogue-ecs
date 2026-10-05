@@ -18,13 +18,36 @@ The main focus is AWS container deployment, networking, load balancing, IAM role
 
 By the end of v1, this project should include the following features:
 
-- A small Terraform Catalogue API running locally with Docker.
-- A Docker image pushed to Amazon ECR.
+- A small Terraform Catalogue API running locally with Docker. Completed.
+- A Docker image pushed to Amazon ECR. Completed.
+- An ECS task definition for the container. Completed.
 - An ECS Fargate service running the container.
 - An Application Load Balancer exposing the service.
-- CloudWatch Logs collecting container logs.
+- CloudWatch Logs configured for container logs. Completed.
 - Terraform managing the AWS infrastructure.
 - Clear documentation of architecture decisions and tradeoffs.
+
+## Current status
+
+Completed:
+
+- Local FastAPI API.
+- Local Docker image build and run.
+- ECR repository.
+- Docker authentication to ECR.
+- Docker image push to ECR.
+- ECS cluster.
+- CloudWatch log group.
+- ECS task execution role.
+- ECS task definition revision.
+
+Next:
+
+- VPC networking.
+- VPC endpoints.
+- Application Load Balancer.
+- ECS service.
+- Validation through the ALB endpoint.
 
 ## Planned application
 

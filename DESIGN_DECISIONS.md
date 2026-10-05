@@ -127,6 +127,30 @@ Tradeoff:
 - Endpoint policies and security groups must be configured correctly.
 - If the container later needs general outbound internet access, this design would need to be revisited.
 
+## Create ECS foundation before ECS service
+
+The project creates the ECS foundation before creating the ECS service.
+
+Completed foundation resources:
+
+- ECR repository.
+- ECS cluster.
+- CloudWatch log group.
+- ECS task execution role.
+- ECS task execution role policy attachment.
+- ECS task definition.
+
+Reasoning:
+
+- The ECS service depends on networking, security groups, target groups, and load balancer configuration.
+- Creating the task definition first validates the container runtime configuration separately.
+- This keeps the implementation easier to troubleshoot in layers.
+
+Tradeoff:
+
+- The task definition exists before any running task exists.
+- More validation steps are needed before the application is reachable from AWS.
+
 ## Use an ephemeral lab deployment model
 
 This project will use a deploy-test-destroy workflow.
