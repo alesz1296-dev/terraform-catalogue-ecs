@@ -80,7 +80,7 @@ resource "aws_ecs_task_definition" "catalogue" {
         {
           containerPort = var.container_port
           hostPort      = var.container_port
-          protocol      = "tcp"
+          protocol      = local.tcp_protocol
         }
       ]
 
@@ -236,16 +236,16 @@ resource "aws_security_group" "alb" {
     description = "Allow HTTP from the internet."
     from_port   = var.alb_listener_port
     to_port     = var.alb_listener_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    protocol    = local.tcp_protocol
+    cidr_blocks = [local.all_ipv4_cidr]
   }
 
   egress {
     description = "Allow outbound traffic."
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = local.any_port
+    to_port     = local.any_port
+    protocol    = local.all_protocols
+    cidr_blocks = [local.all_ipv4_cidr]
   }
 
   tags = merge(
@@ -269,16 +269,16 @@ resource "aws_security_group" "ecs_tasks" {
     description     = "Allow app traffic from the ALB."
     from_port       = var.container_port
     to_port         = var.container_port
-    protocol        = "tcp"
+    protocol        = local.tcp_protocol
     security_groups = [aws_security_group.alb.id]
   }
 
   egress {
     description = "Allow outbound traffic to AWS services through VPC endpoints."
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = local.any_port
+    to_port     = local.any_port
+    protocol    = local.all_protocols
+    cidr_blocks = [local.all_ipv4_cidr]
   }
 
   tags = merge(
@@ -298,18 +298,18 @@ resource "aws_security_group" "vpc_endpoints" {
 
   ingress {
     description     = "Allow HTTPS from ECS tasks."
-    from_port       = 443
-    to_port         = 443
-    protocol        = "tcp"
+    from_port       = local.https_port
+    to_port         = local.https_port
+    protocol        = local.tcp_protocol
     security_groups = [aws_security_group.ecs_tasks.id]
   }
 
   egress {
     description = "Allow outbound traffic."
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = local.any_port
+    to_port     = local.any_port
+    protocol    = local.all_protocols
+    cidr_blocks = [local.all_ipv4_cidr]
   }
 
   tags = merge(
