@@ -35,6 +35,19 @@ variable "container_port" {
   default     = 8000
 }
 
+variable "alb_listener_port" {
+  description = "Port on which the ALB listens for incoming traffic."
+  type        = number
+  default     = 80
+}
+
+variable "http_protocol" {
+  description = "Protocol used by the ALB listener."
+  type        = string
+  default     = "HTTP"
+}
+
+
 variable "container_image_tag" {
   description = "Docker image tag deployed by the ECS task definition."
   type        = string

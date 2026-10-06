@@ -111,3 +111,34 @@ output "logs_vpc_endpoint_id" {
   value       = aws_vpc_endpoint.cloudwatch_logs.id
 }
 
+#ALB
+
+output "alb_dns_name" {
+  description = "DNS name of the Application Load Balancer."
+  value       = aws_lb.catalogue.dns_name
+}
+
+output "alb_arn" {
+  description = "ARN of the Application Load Balancer."
+  value       = aws_lb.catalogue.arn
+}
+
+output "alb_zone_id" {
+  description = "Canonical hosted zone ID of the Application Load Balancer."
+  value       = aws_lb.catalogue.zone_id
+}
+
+output "target_group_arn" {
+  description = "ARN of the ALB target group."
+  value       = aws_lb_target_group.catalogue.arn
+}
+
+output "target_group_name" {
+  description = "Name of the ALB target group."
+  value       = aws_lb_target_group.catalogue.name
+}
+
+output "http_listener_arn" {
+  description = "ARN of the HTTP listener."
+  value       = aws_lb_listener.catalogue.arn
+}

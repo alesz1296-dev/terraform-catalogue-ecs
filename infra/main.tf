@@ -390,4 +390,67 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
 }
 
 
+#######################################################################################
+####################                        ALB                    #################### 
+#######################################################################################
 
+resource "aws_lb" "catalogue" {
+  name               = "${local.name_prefix}-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets            = aws_subnet.public[*].id
+
+  enable_deletion_protection = false # set to true on production workloads
+
+  #access_logs {
+  #  bucket  = aws_s3_bucket.logs.id
+  #  prefix  = "test-lb"
+  #  enabled = true
+  #}
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-alb"
+    }
+  )
+}
+
+resource "aws_lb_target_group" "catalogue" {
+  name        = "${local.name_prefix}-tg"
+  port        = var.container_port
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.catalogue.id
+  target_type = "ip" #needed for ECS Fargate tasks
+
+  health_check {
+    enabled             = true
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 2
+    matcher             = "200-399"
+    path                = "/health"
+    protocol            = var.http_protocol
+
+  }
+}
+
+resource "aws_lb_listener" "catalogue" {
+  load_balancer_arn = aws_lb.catalogue.arn
+  port              = var.alb_listener_port
+  protocol          = var.http_protocol
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.catalogue.arn
+  }
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-http-listener"
+    }
+  )
+}
