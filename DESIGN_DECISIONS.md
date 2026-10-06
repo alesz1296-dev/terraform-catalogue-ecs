@@ -103,6 +103,35 @@ Tradeoff:
 
 For v1, this remains acceptable because the project follows a deploy-test-destroy workflow.
 
+## Separate public ALB access from private ECS task access
+
+The VPC networking layer separates public and private responsibilities.
+
+Current network foundation:
+
+- Public subnets are reserved for the Application Load Balancer.
+- Private subnets are reserved for ECS Fargate tasks.
+- Public subnets use a route table with a default route to the Internet Gateway.
+- Private subnets use a separate route table with no default internet route.
+
+Security group design:
+
+- The ALB security group allows inbound HTTP traffic from the internet on port 80.
+- The ECS task security group allows inbound application traffic only from the ALB security group on the container port.
+- ECS tasks are not directly reachable from the public internet.
+
+Reasoning:
+
+- Matches a common production ECS pattern.
+- Keeps the public entry point separate from the private workload.
+- Makes the security boundary clear and easier to explain.
+- Prepares the architecture for ALB health checks and ECS service registration.
+
+Tradeoff:
+
+- Requires more networking resources than directly assigning public IPs to ECS tasks.
+- Requires VPC endpoints for private ECS task access to ECR, CloudWatch Logs, and S3.
+
 ## Use VPC endpoints instead of NAT Gateway
 
 Private ECS tasks will use VPC endpoints instead of NAT Gateway for required AWS service access.
@@ -116,16 +145,22 @@ Reasoning:
 
 Planned endpoints for ECS image pull and logging:
 
-- ECR API interface endpoint.
-- ECR Docker interface endpoint.
-- CloudWatch Logs interface endpoint.
-- S3 gateway endpoint.
+- ECR API interface endpoint. Created and validated.
+- ECR Docker interface endpoint. Created and validated.
+- CloudWatch Logs interface endpoint. Created and validated.
+- S3 gateway endpoint. Created and validated.
 
 Tradeoff:
 
 - More infrastructure resources to understand and manage.
 - Endpoint policies and security groups must be configured correctly.
 - If the container later needs general outbound internet access, this design would need to be revisited.
+
+Validation result:
+
+- All four required VPC endpoints were confirmed in the `available` state.
+- This validates the private AWS service access path required for ECS image pulls and CloudWatch log delivery.
+- The final proof will occur when the ECS service starts a Fargate task successfully without NAT Gateway.
 
 ## Create ECS foundation before ECS service
 

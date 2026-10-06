@@ -40,13 +40,26 @@ Completed:
 - CloudWatch log group.
 - ECS task execution role.
 - ECS task definition revision.
+- VPC.
+- Public subnets for the future Application Load Balancer.
+- Private subnets for future ECS Fargate tasks.
+- Internet Gateway.
+- Public and private route tables.
+- Security group for the future Application Load Balancer.
+- Security group for ECS tasks that only allows inbound application traffic from the ALB security group.
+- S3 gateway VPC endpoint.
+- ECR API interface VPC endpoint.
+- ECR Docker interface VPC endpoint.
+- CloudWatch Logs interface VPC endpoint.
+- VPC endpoints validated as `available`.
 
 Next:
 
-- VPC networking.
-- VPC endpoints.
 - Application Load Balancer.
+- Target group and `/health` health check.
+- HTTP listener on port 80.
 - ECS service.
+- One Fargate task running in private subnets.
 - Validation through the ALB endpoint.
 
 ## Planned application

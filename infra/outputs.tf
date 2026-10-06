@@ -74,6 +74,8 @@ output "private_route_table_id" {
   value       = aws_route_table.private.id
 }
 
+
+#SGs
 output "alb_security_group_id" {
   description = "Security group ID for the Application Load Balancer."
   value       = aws_security_group.alb.id
@@ -83,3 +85,29 @@ output "ecs_tasks_security_group_id" {
   description = "Security group ID for ECS Fargate tasks."
   value       = aws_security_group.ecs_tasks.id
 }
+
+output "vpc_endpoints_security_group_id" {
+  description = "Security group ID used by VPC interface endpoints."
+  value       = aws_security_group.vpc_endpoints.id
+}
+#endpoints
+output "s3_vpc_endpoint_id" {
+  description = "ID of the S3 gateway VPC endpoint."
+  value       = aws_vpc_endpoint.s3.id
+}
+
+output "ecr_api_vpc_endpoint_id" {
+  description = "ID of the ECR API interface VPC endpoint."
+  value       = aws_vpc_endpoint.ecr_api.id
+}
+
+output "ecr_dkr_vpc_endpoint_id" {
+  description = "ID of the ECR Docker interface VPC endpoint."
+  value       = aws_vpc_endpoint.ecr_dkr.id
+}
+
+output "logs_vpc_endpoint_id" {
+  description = "ID of the CloudWatch Logs interface VPC endpoint."
+  value       = aws_vpc_endpoint.cloudwatch_logs.id
+}
+

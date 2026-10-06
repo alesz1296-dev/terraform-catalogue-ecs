@@ -39,15 +39,39 @@
 
 ## Phase 4: Load-balanced ECS service
 
-- Create VPC networking.
-- Create VPC endpoints for ECR, CloudWatch Logs, and S3.
-- Create security groups.
+- Create VPC networking. Completed.
+- Create public subnets for the ALB. Completed.
+- Create private subnets for ECS tasks. Completed.
+- Create Internet Gateway. Completed.
+- Create public and private route tables. Completed.
+- Create security group for ALB. Completed.
+- Create security group for ECS tasks. Completed.
+- Restrict ECS task inbound traffic to the ALB security group. Completed.
+- Create VPC endpoints for ECR, CloudWatch Logs, and S3. Completed.
+- Validate all four VPC endpoints are available. Completed.
 - Create Application Load Balancer.
 - Create target group.
+- Configure target group health check path `/health`.
 - Create listener.
 - Create ECS service.
 - Run ECS tasks in private subnets.
 - Test ALB endpoint.
+
+## Milestone 7: Load balancing
+
+- Create Application Load Balancer.
+- Create target group.
+- Configure health check path `/health`.
+- Create HTTP listener on port 80.
+- Connect listener to target group.
+
+## Milestone 8: ECS service
+
+- Create ECS service.
+- Run one Fargate task.
+- Place task in private subnets.
+- Attach service to ALB target group.
+- Wait for service to become stable.
 
 ## Phase 5: Operations and documentation
 
