@@ -88,57 +88,67 @@ output "ecs_tasks_security_group_id" {
 
 output "vpc_endpoints_security_group_id" {
   description = "Security group ID used by VPC interface endpoints."
-  value       = aws_security_group.vpc_endpoints.id
+  value       = try(aws_security_group.vpc_endpoints[0].id, null)
 }
 #endpoints
 output "s3_vpc_endpoint_id" {
   description = "ID of the S3 gateway VPC endpoint."
-  value       = aws_vpc_endpoint.s3.id
+  value       = try(aws_vpc_endpoint.s3[0].id, null)
 }
 
 output "ecr_api_vpc_endpoint_id" {
   description = "ID of the ECR API interface VPC endpoint."
-  value       = aws_vpc_endpoint.ecr_api.id
+  value       = try(aws_vpc_endpoint.ecr_api[0].id, null)
 }
 
 output "ecr_dkr_vpc_endpoint_id" {
   description = "ID of the ECR Docker interface VPC endpoint."
-  value       = aws_vpc_endpoint.ecr_dkr.id
+  value       = try(aws_vpc_endpoint.ecr_dkr[0].id, null)
 }
 
 output "logs_vpc_endpoint_id" {
   description = "ID of the CloudWatch Logs interface VPC endpoint."
-  value       = aws_vpc_endpoint.cloudwatch_logs.id
+  value       = try(aws_vpc_endpoint.cloudwatch_logs[0].id, null)
 }
 
 #ALB
 
 output "alb_dns_name" {
   description = "DNS name of the Application Load Balancer."
-  value       = aws_lb.catalogue.dns_name
+  value       = try(aws_lb.catalogue[0].dns_name, null)
 }
 
 output "alb_arn" {
   description = "ARN of the Application Load Balancer."
-  value       = aws_lb.catalogue.arn
+  value       = try(aws_lb.catalogue[0].arn, null)
 }
 
 output "alb_zone_id" {
   description = "Canonical hosted zone ID of the Application Load Balancer."
-  value       = aws_lb.catalogue.zone_id
+  value       = try(aws_lb.catalogue[0].zone_id, null)
 }
 
 output "target_group_arn" {
   description = "ARN of the ALB target group."
-  value       = aws_lb_target_group.catalogue.arn
+  value       = try(aws_lb_target_group.catalogue[0].arn, null)
 }
 
 output "target_group_name" {
   description = "Name of the ALB target group."
-  value       = aws_lb_target_group.catalogue.name
+  value       = try(aws_lb_target_group.catalogue[0].name, null)
 }
 
 output "http_listener_arn" {
   description = "ARN of the HTTP listener."
-  value       = aws_lb_listener.catalogue.arn
+  value       = try(aws_lb_listener.catalogue[0].arn, null)
+}
+
+output "ecs_service_name" {
+  description = "Name of the ECS service."
+  value       = try(aws_ecs_service.catalogue[0].name, null)
+}
+
+output "ecs_service_id" {
+  description = "ID of the ECS service."
+  value       = try(aws_ecs_service.catalogue[0].id, null)
 }

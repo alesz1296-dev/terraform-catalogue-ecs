@@ -54,6 +54,25 @@ variable "container_image_tag" {
   default     = "dev-1"
 }
 
+# Cost-control toggles
+variable "enable_vpc_endpoints" {
+  description = "Create VPC endpoints for private ECS task access to AWS services."
+  type        = bool
+  default     = false
+}
+
+variable "enable_load_balancer" {
+  description = "Create Application Load Balancer, target group, and listener."
+  type        = bool
+  default     = false
+}
+
+variable "enable_ecs_service" {
+  description = "Create ECS service and run Fargate tasks."
+  type        = bool
+  default     = false
+}
+
 # VPCs
 
 variable "cidr_block" {

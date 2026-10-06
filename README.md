@@ -1,6 +1,6 @@
 # Terraform Catalogue Container API
 
-Project III in the AWS/DevOps portfolio roadmap.
+Project III in the AWS/DevOps portfolio roadmap, focusing on ECS deployment with ALB on two AZs.
 
 This project is the containerized evolution of the Terraform Catalogue platform.
 
@@ -52,15 +52,32 @@ Completed:
 - ECR Docker interface VPC endpoint.
 - CloudWatch Logs interface VPC endpoint.
 - VPC endpoints validated as `available`.
-
-Next:
-
 - Application Load Balancer.
-- Target group and `/health` health check.
+- Target group with `/health` health check.
 - HTTP listener on port 80.
 - ECS service.
 - One Fargate task running in private subnets.
-- Validation through the ALB endpoint.
+- ECS service reached stable state.
+- Target group reported the Fargate task as healthy.
+- ALB endpoint returned successful API responses.
+- CloudWatch Logs confirmed container logs.
+- Cleanup lab resources after validation.
+- Preserve validation evidence in project documentation.
+
+Next:
+
+- Security Hardening
+
+Future production-minded enhancements:
+
+- Custom domain with Route 53.
+- HTTPS listener on port 443.
+- ACM certificate for TLS.
+- HTTP port 80 redirect to HTTPS.
+- AWS WAF in front of the Application Load Balancer.
+- Tighter endpoint policies where practical.
+- Tighter outbound rules where practical.
+- Remote encrypted Terraform state.
 
 ## Planned application
 
@@ -136,3 +153,43 @@ terraform destroy
 ```
 
 The goal is to keep the source code, Terraform configuration, documentation, and validation notes in GitHub, not to keep the AWS resources running continuously.
+
+## v1 validation results
+
+The v1 ECS Fargate deployment was validated successfully.
+
+Validation summary:
+
+- ECS service status: `ACTIVE`.
+- Desired tasks: `1`.
+- Running tasks: `1`.
+- Pending tasks: `0`.
+- ALB target group health: `healthy`.
+- Target placement: private subnet.
+- Target port: `8000`.
+- `/` returned service metadata.
+- `/health` returned `{"status":"healthy"}` with HTTP `200`.
+- `/modules` returned module catalogue data.
+- `/modules/s3-static-site` returned a single module response.
+- CloudWatch Logs showed ALB health checks and manual API requests reaching the FastAPI container.
+
+Validated request path:
+
+```text
+Internet
+  |
+  v
+Application Load Balancer
+  |
+  v
+Target Group
+  |
+  v
+Private ECS Fargate Task
+  |
+  v
+FastAPI Container
+  |
+  v
+CloudWatch Logs
+```

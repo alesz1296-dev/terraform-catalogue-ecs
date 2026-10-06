@@ -234,8 +234,8 @@ resource "aws_security_group" "alb" {
 
   ingress {
     description = "Allow HTTP from the internet."
-    from_port   = 80
-    to_port     = 80
+    from_port   = var.alb_listener_port
+    to_port     = var.alb_listener_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -290,6 +290,8 @@ resource "aws_security_group" "ecs_tasks" {
 }
 
 resource "aws_security_group" "vpc_endpoints" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
   name        = "${local.name_prefix}-vpc-endpoints-sg"
   description = "Allow HTTPS from ECS tasks to VPC interface endpoints."
   vpc_id      = aws_vpc.catalogue.id
@@ -325,6 +327,8 @@ resource "aws_security_group" "vpc_endpoints" {
 
 
 resource "aws_vpc_endpoint" "s3" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
   vpc_id            = aws_vpc.catalogue.id
   service_name      = "com.amazonaws.${var.aws_region}.s3"
   vpc_endpoint_type = "Gateway"
@@ -340,11 +344,13 @@ resource "aws_vpc_endpoint" "s3" {
 
 
 resource "aws_vpc_endpoint" "ecr_api" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
   vpc_id              = aws_vpc.catalogue.id
   service_name        = "com.amazonaws.${var.aws_region}.ecr.api"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints[0].id]
   private_dns_enabled = true
 
   tags = merge(
@@ -357,11 +363,13 @@ resource "aws_vpc_endpoint" "ecr_api" {
 
 
 resource "aws_vpc_endpoint" "ecr_dkr" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
   vpc_id              = aws_vpc.catalogue.id
   service_name        = "com.amazonaws.${var.aws_region}.ecr.dkr"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints[0].id]
   private_dns_enabled = true
 
   tags = merge(
@@ -373,11 +381,13 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
 }
 
 resource "aws_vpc_endpoint" "cloudwatch_logs" {
+  count = var.enable_vpc_endpoints ? 1 : 0
+
   vpc_id              = aws_vpc.catalogue.id
   service_name        = "com.amazonaws.${var.aws_region}.logs"
   vpc_endpoint_type   = "Interface"
   subnet_ids          = aws_subnet.private[*].id
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  security_group_ids  = [aws_security_group.vpc_endpoints[0].id]
   private_dns_enabled = true
 
 
@@ -395,6 +405,8 @@ resource "aws_vpc_endpoint" "cloudwatch_logs" {
 #######################################################################################
 
 resource "aws_lb" "catalogue" {
+  count = var.enable_load_balancer ? 1 : 0
+
   name               = "${local.name_prefix}-alb"
   internal           = false
   load_balancer_type = "application"
@@ -418,9 +430,11 @@ resource "aws_lb" "catalogue" {
 }
 
 resource "aws_lb_target_group" "catalogue" {
+  count = var.enable_load_balancer ? 1 : 0
+
   name        = "${local.name_prefix}-tg"
   port        = var.container_port
-  protocol    = "HTTP"
+  protocol    = var.http_protocol
   vpc_id      = aws_vpc.catalogue.id
   target_type = "ip" #needed for ECS Fargate tasks
 
@@ -438,19 +452,62 @@ resource "aws_lb_target_group" "catalogue" {
 }
 
 resource "aws_lb_listener" "catalogue" {
-  load_balancer_arn = aws_lb.catalogue.arn
+  count = var.enable_load_balancer ? 1 : 0
+
+  load_balancer_arn = aws_lb.catalogue[0].arn
   port              = var.alb_listener_port
   protocol          = var.http_protocol
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.catalogue.arn
+    target_group_arn = aws_lb_target_group.catalogue[0].arn
   }
 
   tags = merge(
     local.common_tags,
     {
       Name = "${local.name_prefix}-http-listener"
+    }
+  )
+}
+
+
+#######################################################################################
+####################                   ECS Service                 #################### 
+#######################################################################################
+resource "aws_ecs_service" "catalogue" {
+  count = var.enable_ecs_service ? 1 : 0
+
+  name            = "${local.name_prefix}-service"
+  cluster         = aws_ecs_cluster.catalogue.id
+  task_definition = aws_ecs_task_definition.catalogue.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = aws_subnet.private[*].id
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = false
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.catalogue[0].arn
+    container_name   = "catalogue-api"
+    container_port   = var.container_port
+  }
+
+  depends_on = [
+    aws_lb_listener.catalogue,
+    aws_vpc_endpoint.ecr_api,
+    aws_vpc_endpoint.ecr_dkr,
+    aws_vpc_endpoint.cloudwatch_logs,
+    aws_vpc_endpoint.s3
+  ]
+
+  tags = merge(
+    local.common_tags,
+    {
+      Name = "${local.name_prefix}-service"
     }
   )
 }

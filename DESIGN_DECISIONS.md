@@ -81,6 +81,13 @@ Tradeoff:
 
 - HTTPS is expected in a production system and should be added later with ACM.
 
+Future production enhancement:
+
+- Add an ACM certificate.
+- Add an HTTPS listener on port 443.
+- Redirect HTTP port 80 to HTTPS.
+- Consider Route 53 for a custom domain.
+
 ## Run ECS tasks in private subnets
 
 ECS Fargate tasks will run in private subnets for this project.
@@ -132,6 +139,12 @@ Tradeoff:
 - Requires more networking resources than directly assigning public IPs to ECS tasks.
 - Requires VPC endpoints for private ECS task access to ECR, CloudWatch Logs, and S3.
 
+Future production enhancement:
+
+- Place AWS WAF in front of the Application Load Balancer.
+- Use managed WAF rules and/or rate limiting.
+- Keep ECS tasks private and reachable only through the ALB target group.
+
 ## Use VPC endpoints instead of NAT Gateway
 
 Private ECS tasks will use VPC endpoints instead of NAT Gateway for required AWS service access.
@@ -162,6 +175,11 @@ Validation result:
 - This validates the private AWS service access path required for ECS image pulls and CloudWatch log delivery.
 - The final proof will occur when the ECS service starts a Fargate task successfully without NAT Gateway.
 
+Future production enhancement:
+
+- Review and restrict VPC endpoint policies where practical.
+- Review ECS task outbound rules and reduce broad egress where practical.
+
 ## Create ECS foundation before ECS service
 
 The project creates the ECS foundation before creating the ECS service.
@@ -186,6 +204,33 @@ Tradeoff:
 - The task definition exists before any running task exists.
 - More validation steps are needed before the application is reachable from AWS.
 
+## Validate v1 through the ALB before cleanup
+
+The v1 architecture was validated through the public Application Load Balancer before cleanup.
+
+Validated behavior:
+
+- ECS service reached `ACTIVE` status.
+- ECS desired count was `1`.
+- ECS running count was `1`.
+- ECS pending count was `0`.
+- ALB target group reported the private Fargate task as `healthy`.
+- The ALB forwarded requests to the FastAPI container on port `8000`.
+- `/`, `/health`, `/modules`, and `/modules/s3-static-site` returned successful responses.
+- CloudWatch Logs received container logs for ALB health checks and manual API requests.
+
+Reasoning:
+
+- Validates that the private ECS task can run without a public IP.
+- Confirms the ALB-to-target-group-to-task path works.
+- Confirms the VPC endpoint path supports image pulls and log delivery without NAT Gateway.
+- Provides concrete portfolio evidence before resources are destroyed for cost control.
+
+Tradeoff:
+
+- The public ALB endpoint is temporary and will not remain available after cleanup.
+- Validation evidence must be documented before running destroy.
+
 ## Use an ephemeral lab deployment model
 
 This project will use a deploy-test-destroy workflow.
@@ -204,3 +249,9 @@ Tradeoff:
 - The public endpoint will not remain available after cleanup.
 - CloudWatch logs and runtime evidence may be removed unless saved separately.
 - Any manual runtime changes would be lost, which reinforces the need to keep configuration in code.
+
+Future production enhancement:
+
+- Use a remote encrypted Terraform backend.
+- Keep production state separate from lab/test state.
+- Add environment-specific variable files or workspaces only after the base architecture is stable.

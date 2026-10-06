@@ -131,44 +131,129 @@ terraform-catalogue-ecs-dev-task:1
 
 Receives external HTTP traffic and forwards requests to healthy ECS tasks.
 
-Status: pending.
+Status: created and validated.
 
 Security group: created.
 
 Next load balancing resources:
 
-- Application Load Balancer.
-- Target group.
-- Health check path: `/health`.
-- HTTP listener on port 80.
-- Listener forwarding rule to the target group.
+- Application Load Balancer. Completed.
+- Target group. Completed.
+- Health check path: `/health`. Completed.
+- HTTP listener on port 80. Completed.
+- Listener forwarding rule to the target group. Completed.
+
+Future production-minded edge layer:
+
+```text
+Internet
+  |
+  v
+Route 53 / Custom Domain
+  |
+  v
+AWS WAF
+  |
+  v
+Application Load Balancer
+  |
+  | HTTPS :443
+  v
+ECS Fargate tasks
+```
+
+Planned security enhancements for a production-like version:
+
+- ACM certificate for TLS.
+- HTTPS listener on port 443.
+- HTTP port 80 redirect to HTTPS.
+- AWS WAF attached to the Application Load Balancer.
+- Managed WAF rules or rate limiting.
+- Endpoint policy review for private AWS service access.
+- Remote encrypted Terraform state.
 
 ### ECS Service
 
 Maintains the desired number of running tasks and connects the tasks to the target group.
 
-Status: pending.
+Status: created and validated.
 
 ### Fargate Task
 
 Runs the container without managing EC2 instances.
 
-Status: pending.
+Status: running and validated.
 
 Security group: created.
 
 Planned service behavior:
 
-- Run one Fargate task.
-- Place the task in private subnets.
-- Attach the service to the ALB target group.
-- Wait for the service to reach a stable state.
+- Run one Fargate task. Completed.
+- Place the task in private subnets. Completed.
+- Attach the service to the ALB target group. Completed.
+- Wait for the service to reach a stable state. Completed.
 
 ### CloudWatch Logs
 
 Stores logs emitted by the running container.
 
-Status: log group created.
+Status: log group created and container logs confirmed.
+
+## v1 validation evidence
+
+The v1 architecture was validated successfully.
+
+ECS service state:
+
+```text
+Status:  ACTIVE
+Desired: 1
+Running: 1
+Pending: 0
+```
+
+Target group state:
+
+```text
+Target health: healthy
+Target port: 8000
+Target placement: private subnet
+```
+
+Application endpoint tests:
+
+```text
+GET /                         -> 200 OK
+GET /health                   -> 200 OK
+GET /modules                  -> 200 OK
+GET /modules/s3-static-site   -> 200 OK
+```
+
+CloudWatch Logs:
+
+```text
+ALB health checks reached /health.
+Manual requests reached /, /health, /modules, and /modules/s3-static-site.
+Container logs were written under the ECS log group.
+```
+
+Validated request path:
+
+```text
+Internet
+  |
+  v
+Application Load Balancer
+  |
+  v
+ALB Target Group
+  |
+  v
+Private ECS Fargate Task
+  |
+  v
+FastAPI Container :8000
+```
 
 ## Initial endpoint plan
 
